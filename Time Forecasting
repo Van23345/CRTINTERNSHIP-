@@ -1,0 +1,293 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[3]:
+
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from statsmodels.tsa.arima_model import ARIMA
+from pmdarima.arima import auto_arima
+from sklearn.metrics import mean_squared_error, mean_absolute_error
+from prophet import Prophet
+
+
+# In[4]:
+
+
+df = pd.read_csv('C:\csvfiles\dc.csv')
+df = df.rename(columns = {'Unnamed: 0' : 'Date'})
+df.head()
+
+
+# In[5]:
+
+
+plt.plot(df['open_USD'])
+plt.show()
+
+
+# In[6]:
+
+
+# Split the data
+train = df.iloc[:-200] 
+test = df.iloc[-200:]
+
+
+# In[8]:
+
+
+#sample parameters
+model = ARIMA(train, order=(2, 1, 0)) 
+results = model.fit()
+
+# Make predictions for the test set
+forecast = results.forecast(steps=200)
+forecast
+
+
+# In[11]:
+
+
+#mean absolute error
+mae = mean_absolute_error(test, forecast)
+
+#root mean square error
+mse = mean_squared_error(test, forecast)
+rmse = np.sqrt(mse)
+
+#mean absolute percentage error
+mape = (forecast - test).abs().div(test).mean()
+
+print(f"MAE: {mae:.2f}")
+print(f"RMSE: {rmse:.2f}")
+print(f"MAPE: {mape:.2f}%")
+
+
+# In[13]:
+
+
+MAE: 7956.23
+
+RMSE: 11705.11
+
+MAPE: 0.35%
+
+
+# In[15]:
+
+
+plt.plot(train.index, train, label='Train')
+plt.plot(test.index, test, label='Test')
+plt.plot(forecast.index, forecast, label='Forecast')
+plt.legend()
+plt.show()
+
+
+# In[17]:
+
+
+df_p = df.reset_index()[["Time", "close_USD"]].rename(columns={"Time": "ds", "close_USD": "y"})
+
+
+# In[20]:
+
+
+model = Prophet()
+
+# Fit the model
+model.fit(df_p)
+
+# create date to predict
+future_dates = model.make_future_dataframe(periods=365)
+
+# Make predictions
+predictions = model.predict(future_dates)
+
+predictions.head()
+
+
+# In[22]:
+
+
+model.plot(predictions)
+
+
+# In[23]:
+
+
+model.plot_components(predictions)
+
+
+# In[27]:
+
+
+from prophet.diagnostics import cross_validation, performance_metrics
+# Perform cross-validation with initial 365 days for the first training data and the cut-off for every 180 days.
+
+df_cv = cross_validation(model, initial='365 days', period='180 days', horizon = '365 days')
+
+# Calculate evaluation metrics
+res = performance_metrics(df_cv)
+
+res
+
+
+# In[29]:
+
+
+from prophet.plot import plot_cross_validation_metric
+#choose between 'mse', 'rmse', 'mae', 'mape', 'coverage'
+
+plot_cross_validation_metric(df_cv, metric= 'mape')
+
+
+# In[ ]:#!/usr/bin/env python
+# coding: utf-8
+
+# In[3]:
+
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from statsmodels.tsa.arima_model import ARIMA
+from pmdarima.arima import auto_arima
+from sklearn.metrics import mean_squared_error, mean_absolute_error
+from prophet import Prophet
+
+
+# In[4]:
+
+
+df = pd.read_csv('C:\csvfiles\dc.csv')
+df = df.rename(columns = {'Unnamed: 0' : 'Date'})
+df.head()
+
+
+# In[5]:
+
+
+plt.plot(df['open_USD'])
+plt.show()
+
+
+# In[6]:
+
+
+# Split the data
+train = df.iloc[:-200] 
+test = df.iloc[-200:]
+
+
+# In[8]:
+
+
+#sample parameters
+model = ARIMA(train, order=(2, 1, 0)) 
+results = model.fit()
+
+# Make predictions for the test set
+forecast = results.forecast(steps=200)
+forecast
+
+
+# In[11]:
+
+
+#mean absolute error
+mae = mean_absolute_error(test, forecast)
+
+#root mean square error
+mse = mean_squared_error(test, forecast)
+rmse = np.sqrt(mse)
+
+#mean absolute percentage error
+mape = (forecast - test).abs().div(test).mean()
+
+print(f"MAE: {mae:.2f}")
+print(f"RMSE: {rmse:.2f}")
+print(f"MAPE: {mape:.2f}%")
+
+
+# In[13]:
+
+
+MAE: 7956.23
+
+RMSE: 11705.11
+
+MAPE: 0.35%
+
+
+# In[15]:
+
+
+plt.plot(train.index, train, label='Train')
+plt.plot(test.index, test, label='Test')
+plt.plot(forecast.index, forecast, label='Forecast')
+plt.legend()
+plt.show()
+
+
+# In[17]:
+
+
+df_p = df.reset_index()[["Time", "close_USD"]].rename(columns={"Time": "ds", "close_USD": "y"})
+
+
+# In[20]:
+
+
+model = Prophet()
+
+# Fit the model
+model.fit(df_p)
+
+# create date to predict
+future_dates = model.make_future_dataframe(periods=365)
+
+# Make predictions
+predictions = model.predict(future_dates)
+
+predictions.head()
+
+
+# In[22]:
+
+
+model.plot(predictions)
+
+
+# In[23]:
+
+
+model.plot_components(predictions)
+
+
+# In[27]:
+
+
+from prophet.diagnostics import cross_validation, performance_metrics
+# Perform cross-validation with initial 365 days for the first training data and the cut-off for every 180 days.
+
+df_cv = cross_validation(model, initial='365 days', period='180 days', horizon = '365 days')
+
+# Calculate evaluation metrics
+res = performance_metrics(df_cv)
+
+res
+
+
+# In[29]:
+
+
+from prophet.plot import plot_cross_validation_metric
+#choose between 'mse', 'rmse', 'mae', 'mape', 'coverage'
+
+plot_cross_validation_metric(df_cv, metric= 'mape')
+
+
+# In[ ]:
